@@ -41,15 +41,4 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-// If this file is executed directly (like in shared hosting), I start the server here.
-if (require.main === module) {
-  const port = process.env.PORT || 3000;
-
-  // I listen on all interfaces so the hosting proxy can reach me.
-  app.listen(port, "0.0.0.0", () => {
-    console.log(`Server running on port ${port}`);
-  });
-}
-
-
 module.exports = app;

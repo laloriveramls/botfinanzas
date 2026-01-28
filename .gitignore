@@ -6,7 +6,8 @@
 *.iml
 out
 gen
-
+.env
+.env.*
 
 node_modules/
 
