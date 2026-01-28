@@ -12,6 +12,9 @@ var app = express();
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+// I expose a health endpoint so the platform can check the app is alive.
+app.get("/health", (_req, res) => res.status(200).send("ok"));
+
 
 app.use(logger('dev'));
 app.use(express.json());
