@@ -1,0 +1,118 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('botfinanzas:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
+
+// --- Telegram bot (polling) ---
+const { Telegraf } = require("telegraf");
+
+async function startTelegramBot() {
+  if (!process.env.BOT_TOKEN) {
+    console.log("BOT_TOKEN not set, skipping bot start.");
+    return;
+  }
+
+  const bot = new Telegraf(process.env.BOT_TOKEN);
+
+  bot.start((ctx) => ctx.reply("Listo ✅ Mándame un gasto como: `uber 86`"));
+  bot.on("text", (ctx) => ctx.reply(`Recibí: ${ctx.message.text}`));
+
+  // I force polling mode and drop old updates just in case.
+  await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+
+  bot.launch({ dropPendingUpdates: true, allowedUpdates: ["message"] })
+      .then(() => console.log("Bot running (polling)."))
+      .catch((e) => console.error("Bot launch failed:", e));
+
+  process.once("SIGINT", () => bot.stop("SIGINT"));
+  process.once("SIGTERM", () => bot.stop("SIGTERM"));
+}
+
+startTelegramBot().catch((e) => console.error("Bot init failed:", e));
+
